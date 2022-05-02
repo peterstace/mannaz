@@ -1,6 +1,6 @@
 package chess
 
-import "fmt"
+import "math/bits"
 
 // side is an enum of either "white" or "black", and can represent either a
 // player or a piece colour. It can also be used as an array index for `[2]T`
@@ -35,6 +35,9 @@ type Position struct {
 	// named `*Mask` for details.
 	flags uint8
 
+	// stm is the side to move.
+	stm side
+
 	// TODO: Also have to manage move list somehow for repetition.
 }
 
@@ -46,17 +49,23 @@ func kingCastleMask(s side) uint8 {
 	return 0x02 << (s * 4)
 }
 
-func sideToMoveMask(s side) uint8 {
-	return 0x04 << (s * 4)
-}
-
 func (p *Position) assertInvariants() {
-	if conj := (p.side[0] & p.side[1]); conj != 0 {
-		panic(fmt.Sprintf(
-			"non-zero side conjunction: %d & %d: %d",
-			p.side[0], p.side[1], conj,
-		))
+	if p.side[0]&p.side[1] != 0 {
+		panic("side bitboards overlap")
 	}
+
+	var ones int
+	for _, bb := range []uint64{p.pawn, p.nite, p.bish, p.rook, p.quee, p.king} {
+		ones += bits.OnesCount64(bb)
+	}
+	if ones != bits.OnesCount64(p.side[0]|p.side[1]) {
+		panic("piece bitboards overlap")
+	}
+
+	if p.pawn|p.nite|p.bish|p.rook|p.quee|p.king != p.side[0]|p.side[1] {
+		panic("piece bitboards and side bitboards don't match")
+	}
+
 	// TODO: additional assertions
 }
 
@@ -78,6 +87,14 @@ func InitialPosition() Position {
 		rook: rank18 & fileAH,
 		quee: rank18 & fileD,
 		king: rank18 & fileE,
+		hmc:  0,
+		ep:   [2]uint8{},
+		flags: 0x00 |
+			queenCastleMask(white) |
+			queenCastleMask(black) |
+			kingCastleMask(white) |
+			kingCastleMask(black),
+		stm: white,
 	}
 	pos.assertInvariants()
 	return pos

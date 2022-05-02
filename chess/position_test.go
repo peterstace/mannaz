@@ -1,9 +1,11 @@
-package chess
+package chess_test
 
 import (
 	"testing"
+
+	"github.com/peterstace/starquake/chess"
 )
 
 func TestInitialPosition(t *testing.T) {
-	engine.InitialPosition()
+	chess.InitialPosition()
 }
