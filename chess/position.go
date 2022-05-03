@@ -66,7 +66,14 @@ func (p *Position) assertInvariants() {
 		panic("piece bitboards and side bitboards don't match")
 	}
 
-	// TODO: additional assertions
+	if p.ep[white] & ^uint8((p.pawn&p.side[white]&rank4)<<24) != 0 {
+		panic("white en passant rights set but no pawn")
+	}
+	if p.ep[black] & ^uint8((p.pawn&p.side[black]&rank5)<<32) != 0 {
+		panic("black en passant rights set but no pawn")
+	}
+
+	// TODO: additional assertions (castle rights)
 }
 
 //func (p *Position) FEN() string {
@@ -79,22 +86,22 @@ func (p *Position) assertInvariants() {
 //}
 
 func InitialPosition() Position {
+	var flags uint8
+	flags |= queenCastleMask(white) | kingCastleMask(white)
+	flags |= queenCastleMask(black) | kingCastleMask(black)
+
 	pos := Position{
-		side: [2]uint64{rank12, rank78},
-		pawn: rank27,
-		nite: rank18 & fileBG,
-		bish: rank18 & fileCF,
-		rook: rank18 & fileAH,
-		quee: rank18 & fileD,
-		king: rank18 & fileE,
-		hmc:  0,
-		ep:   [2]uint8{},
-		flags: 0x00 |
-			queenCastleMask(white) |
-			queenCastleMask(black) |
-			kingCastleMask(white) |
-			kingCastleMask(black),
-		stm: white,
+		side:  [2]uint64{rank12, rank78},
+		pawn:  rank27,
+		nite:  rank18 & fileBG,
+		bish:  rank18 & fileCF,
+		rook:  rank18 & fileAH,
+		quee:  rank18 & fileD,
+		king:  rank18 & fileE,
+		hmc:   0,
+		ep:    [2]uint8{},
+		flags: flags,
+		stm:   white,
 	}
 	pos.assertInvariants()
 	return pos
