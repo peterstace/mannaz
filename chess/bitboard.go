@@ -55,6 +55,15 @@ const (
 	fileCF = fileC | fileF
 )
 
+const (
+	sqA1 = fileA & rank1
+	sqA8 = fileA & rank8
+	sqE1 = fileE & rank1
+	sqE8 = fileE & rank8
+	sqH1 = fileH & rank1
+	sqH8 = fileH & rank8
+)
+
 func rank(i int) uint64 {
 	return 0xff << (8 * i)
 }

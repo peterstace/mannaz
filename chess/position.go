@@ -1,6 +1,8 @@
 package chess
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
 // side is an enum of either "white" or "black", and can represent either a
 // player or a piece colour. It can also be used as an array index for `[2]T`
@@ -73,7 +75,39 @@ func (p *Position) assertInvariants() {
 		panic("black en passant rights set but no pawn")
 	}
 
-	// TODO: additional assertions (castle rights)
+	// TODO: refactor castle checks to be a bit cleaner.
+	if queenCastleMask(white)&p.flags != 0 {
+		if p.side[white]&p.rook&sqA1 == 0 {
+			panic("white queen-side castle rights but rook not at a1")
+		}
+		if p.side[white]&p.king&sqE1 == 0 {
+			panic("white queen-side castle rights but king not at e1")
+		}
+	}
+	if queenCastleMask(black)&p.flags != 0 {
+		if p.side[black]&p.rook&sqH8 == 0 {
+			panic("black queen-side castle rights but rook not at h8")
+		}
+		if p.side[black]&p.king&sqE8 == 0 {
+			panic("black queen-side castle rights but king not at e8")
+		}
+	}
+	if kingCastleMask(white)&p.flags != 0 {
+		if p.side[white]&p.rook&sqH1 == 0 {
+			panic("white king-side castle rights but rook not at h1")
+		}
+		if p.side[white]&p.king&sqE1 == 0 {
+			panic("white queen-side castle rights but king not at e1")
+		}
+	}
+	if kingCastleMask(black)&p.flags != 0 {
+		if p.side[black]&p.rook&sqH8 == 0 {
+			panic("black king-side castle rights but rook not at h8")
+		}
+		if p.side[black]&p.king&sqE8 == 0 {
+			panic("black queen-side castle rights but king not at e8")
+		}
+	}
 }
 
 //func (p *Position) FEN() string {
