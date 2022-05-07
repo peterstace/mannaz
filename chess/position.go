@@ -80,16 +80,16 @@ func (p *Position) assertInvariants() {
 		if p.side[white]&p.rook&sqA1 == 0 {
 			panic("white queen-side castle rights but rook not at a1")
 		}
-		if p.side[white]&p.quee&sqD1 == 0 {
-			panic("white queen-side castle rights but queen not at d1")
+		if p.side[white]&p.king&sqE1 == 0 {
+			panic("white queen-side castle rights but king not at e1")
 		}
 	}
 	if queenCastleMask(black)&p.flags != 0 {
 		if p.side[black]&p.rook&sqA8 == 0 {
 			panic("black queen-side castle rights but rook not at a8")
 		}
-		if p.side[black]&p.quee&sqD8 == 0 {
-			panic("black queen-side castle rights but queen not at d8")
+		if p.side[black]&p.king&sqE8 == 0 {
+			panic("black queen-side castle rights but king not at e8")
 		}
 	}
 	if kingCastleMask(white)&p.flags != 0 {
