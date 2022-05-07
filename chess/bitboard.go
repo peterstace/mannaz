@@ -58,6 +58,8 @@ const (
 const (
 	sqA1 = fileA & rank1
 	sqA8 = fileA & rank8
+	sqD1 = fileD & rank1
+	sqD8 = fileD & rank8
 	sqE1 = fileE & rank1
 	sqE8 = fileE & rank8
 	sqH1 = fileH & rank1
