@@ -1,6 +1,7 @@
 package chess
 
 import (
+	"fmt"
 	"math/bits"
 )
 
@@ -13,6 +14,10 @@ const (
 	white side = 0
 	black side = 1
 )
+
+func (s side) String() string {
+	return [2]string{"white", "black"}[s]
+}
 
 type Position struct {
 	// side bitboards indicate the colour of a piece occupying a square.
@@ -75,37 +80,34 @@ func (p *Position) assertInvariants() {
 		panic("black en passant rights set but no pawn")
 	}
 
-	// TODO: refactor castle checks to be a bit cleaner.
-	if queenCastleMask(white)&p.flags != 0 {
-		if p.side[white]&p.rook&sqA1 == 0 {
-			panic("white queen-side castle rights but rook not at a1")
+	majorPieceRank := [2]uint64{rank1, rank8}
+	for s := white; s < black; s++ {
+		for _, castle := range [2]struct {
+			name     string
+			rookFile uint64
+			maskFn   func(side) uint8
+		}{
+			{"queen", fileA, queenCastleMask},
+			{"king", fileH, kingCastleMask},
+		} {
+			if (castle.maskFn(s) & p.flags) != 0 {
+				requireRook := majorPieceRank[s] & castle.rookFile
+				haveRook := p.side[s] & p.rook
+				if (requireRook & haveRook) == 0 {
+					panic(fmt.Sprintf(
+						"%s %s-side castle rights but %s's rook not present",
+						s, castle.name, castle.name,
+					))
+				}
+			}
 		}
-		if p.side[white]&p.king&sqE1 == 0 {
-			panic("white queen-side castle rights but king not at e1")
-		}
-	}
-	if queenCastleMask(black)&p.flags != 0 {
-		if p.side[black]&p.rook&sqA8 == 0 {
-			panic("black queen-side castle rights but rook not at a8")
-		}
-		if p.side[black]&p.king&sqE8 == 0 {
-			panic("black queen-side castle rights but king not at e8")
-		}
-	}
-	if kingCastleMask(white)&p.flags != 0 {
-		if p.side[white]&p.rook&sqH1 == 0 {
-			panic("white king-side castle rights but rook not at h1")
-		}
-		if p.side[white]&p.king&sqE1 == 0 {
-			panic("white king-side castle rights but king not at e1")
-		}
-	}
-	if kingCastleMask(black)&p.flags != 0 {
-		if p.side[black]&p.rook&sqH8 == 0 {
-			panic("black king-side castle rights but rook not at h8")
-		}
-		if p.side[black]&p.king&sqE8 == 0 {
-			panic("black king-side castle rights but king not at e8")
+		if ((queenCastleMask(s) | kingCastleMask(s)) & p.flags) != 0 {
+			requireKing := majorPieceRank[s] & fileE
+			haveKing := p.side[s] & p.king
+			if (requireKing & haveKing) == 0 {
+				panic(fmt.Sprintf("%s castle rights "+
+					"but king not at origin", s))
+			}
 		}
 	}
 }
