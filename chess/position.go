@@ -38,22 +38,14 @@ type Position struct {
 	// ep show en passant rights for each file.
 	ep [2]uint8
 
-	// flags stores flags specific to each side in each nibble. See functions
-	// named `*Mask` for details.
-	flags uint8
+	// qcr shows queen-side castle rights for each side.
+	qcr [2]bool
+
+	// kcr shows king-side castle rights for each side.
+	kcr [2]bool
 
 	// stm is the side to move.
 	stm side
-
-	// TODO: Also have to manage move list somehow for repetition.
-}
-
-func queenCastleMask(s side) uint8 {
-	return 0x01 << (s * 4)
-}
-
-func kingCastleMask(s side) uint8 {
-	return 0x02 << (s * 4)
 }
 
 func (p *Position) assertInvariants() {
@@ -85,12 +77,12 @@ func (p *Position) assertInvariants() {
 		for _, castle := range [2]struct {
 			name     string
 			rookFile uint64
-			maskFn   func(side) uint8
+			rights   bool
 		}{
-			{"queen", fileA, queenCastleMask},
-			{"king", fileH, kingCastleMask},
+			{"queen", fileA, p.qcr[s]},
+			{"king", fileH, p.kcr[s]},
 		} {
-			if (castle.maskFn(s) & p.flags) != 0 {
+			if castle.rights {
 				requireRook := majorPieceRank[s] & castle.rookFile
 				haveRook := p.side[s] & p.rook
 				if (requireRook & haveRook) == 0 {
@@ -101,7 +93,7 @@ func (p *Position) assertInvariants() {
 				}
 			}
 		}
-		if ((queenCastleMask(s) | kingCastleMask(s)) & p.flags) != 0 {
+		if p.qcr[s] || p.kcr[s] {
 			requireKing := majorPieceRank[s] & fileE
 			haveKing := p.side[s] & p.king
 			if (requireKing & haveKing) == 0 {
@@ -122,22 +114,19 @@ func (p *Position) assertInvariants() {
 //}
 
 func InitialPosition() Position {
-	var flags uint8
-	flags |= queenCastleMask(white) | kingCastleMask(white)
-	flags |= queenCastleMask(black) | kingCastleMask(black)
-
 	pos := Position{
-		side:  [2]uint64{rank12, rank78},
-		pawn:  rank27,
-		nite:  rank18 & fileBG,
-		bish:  rank18 & fileCF,
-		rook:  rank18 & fileAH,
-		quee:  rank18 & fileD,
-		king:  rank18 & fileE,
-		hmc:   0,
-		ep:    [2]uint8{},
-		flags: flags,
-		stm:   white,
+		side: [2]uint64{rank12, rank78},
+		pawn: rank27,
+		nite: rank18 & fileBG,
+		bish: rank18 & fileCF,
+		rook: rank18 & fileAH,
+		quee: rank18 & fileD,
+		king: rank18 & fileE,
+		hmc:  0,
+		ep:   [2]uint8{},
+		qcr:  [2]bool{true, true},
+		kcr:  [2]bool{true, true},
+		stm:  white,
 	}
 	pos.assertInvariants()
 	return pos
