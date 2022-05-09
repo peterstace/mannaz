@@ -73,3 +73,17 @@ func rank(i int) uint64 {
 func file(i int) uint64 {
 	return 0x0101010101010101 << i
 }
+
+func flipDiagA1H8(x uint64) uint64 {
+	const k1 = 0x5500550055005500
+	const k2 = 0x3333000033330000
+	const k4 = 0x0f0f0f0f00000000
+	var t uint64
+	t = k4 & (x ^ (x << 28))
+	x ^= t ^ (t >> 28)
+	t = k2 & (x ^ (x << 14))
+	x ^= t ^ (t >> 14)
+	t = k1 & (x ^ (x << 7))
+	x ^= t ^ (t >> 7)
+	return x
+}

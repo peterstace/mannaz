@@ -102,16 +102,9 @@ func (p *Position) assertInvariants() {
 			}
 		}
 	}
-}
 
-//func (p *Position) FEN() string {
-//	for ri := 7; ri >= 0; ri-- {
-//		r := rank(ri)
-//		for fi := 0; fi < 8; fi++ {
-//			sq := r & file(fi)
-//		}
-//	}
-//}
+	// TODO: only a single ep square should be 1 at a time.
+}
 
 func InitialPosition() Position {
 	pos := Position{
