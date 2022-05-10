@@ -66,12 +66,12 @@ const (
 	sqH8 = fileH & rank8
 )
 
-func rank(i int) uint64 {
-	return 0xff << (8 * i)
+func rankBB(r rank) uint64 {
+	return 0xff << (8 * r)
 }
 
-func file(i int) uint64 {
-	return 0x0101010101010101 << i
+func fileBB(f file) uint64 {
+	return 0x0101010101010101 << f
 }
 
 func flipDiagA1H8(x uint64) uint64 {

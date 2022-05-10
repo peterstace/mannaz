@@ -2,7 +2,6 @@ package chess
 
 import (
 	"fmt"
-	"math/bits"
 	"strings"
 )
 
@@ -10,11 +9,11 @@ func (p *Position) FEN() string {
 	var sb strings.Builder
 
 	occ := p.side[white] | p.side[black]
-	for ri := 7; ri >= 0; ri-- {
-		r := rank(ri)
+	for ri := rank(7); ri >= 0; ri-- {
+		r := rankBB(ri)
 		var emptyCount int
-		for fi := 0; fi < 8; fi++ {
-			sq := r & file(fi)
+		for fi := file(0); fi < 8; fi++ {
+			sq := r & fileBB(fi)
 			if (occ & sq) == 0 {
 				emptyCount++
 				continue
@@ -71,20 +70,14 @@ func (p *Position) FEN() string {
 
 	sb.WriteRune(' ')
 
-	//var anyEP bool
-	for s := white; s < black; s++ {
-		ep := p.ep[s]
-		if ep != 0 {
-			//anyEP = true
-			file := bits.TrailingZeros8(ep)
-			flippedPawns := flipDiagA1H8(p.pawn & p.side[s])
-			flippedPawns >>= 8 * file
-			rank := bits.TrailingZeros8(uint8(flippedPawns))
-			sb.WriteRune(rune(file) + 'a')
-			sb.WriteRune(rune(rank) + '0') // must be 3 or 6?
-			continue
-		}
+	if p.dp {
+		sb.WriteRune(p.dpFile.algebraic())
+		sb.WriteRune([2]rune{'6', '3'}[p.stm])
+	} else {
+		sb.WriteRune('-')
 	}
+
+	fmt.Fprintf(&sb, " %d %d", p.hmc, p.fmc)
 
 	return sb.String()
 }
