@@ -8,34 +8,39 @@ import (
 func (p *Position) FEN() string {
 	var sb strings.Builder
 
-	occ := p.side[white] | p.side[black]
 	for ri := rank(7); ri >= 0; ri-- {
 		r := rankBB(ri)
 		var emptyCount int
 		for fi := file(0); fi < 8; fi++ {
 			sq := r & fileBB(fi)
-			if (occ & sq) == 0 {
+
+			var piece rune
+			for _, itm := range []struct {
+				bb    uint64
+				piece rune
+			}{
+				{p.pawn[white], 'P'},
+				{p.nite[white], 'N'},
+				{p.bish[white], 'B'},
+				{p.rook[white], 'R'},
+				{p.quee[white], 'Q'},
+				{p.king[white], 'K'},
+				{p.pawn[black], 'p'},
+				{p.nite[black], 'n'},
+				{p.bish[black], 'b'},
+				{p.rook[black], 'r'},
+				{p.quee[black], 'q'},
+				{p.king[black], 'k'},
+			} {
+				if sq&itm.bb != 0 {
+					piece = itm.piece
+				}
+			}
+			if piece == 0 {
 				emptyCount++
 				continue
 			}
-			piece := '0'
-			switch {
-			case (p.pawn & sq) != 0:
-				piece = 'P'
-			case (p.nite & sq) != 0:
-				piece = 'N'
-			case (p.bish & sq) != 0:
-				piece = 'B'
-			case (p.rook & sq) != 0:
-				piece = 'R'
-			case (p.quee & sq) != 0:
-				piece = 'Q'
-			case (p.king & sq) != 0:
-				piece = 'K'
-			}
-			if (p.side[black] & sq) != 0 {
-				piece += 'a' - 'A'
-			}
+
 			if emptyCount != 0 {
 				emptyCount = 0
 				fmt.Fprintf(&sb, "%d", emptyCount)

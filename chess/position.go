@@ -2,7 +2,6 @@ package chess
 
 import (
 	"fmt"
-	"math/bits"
 )
 
 // side is an enum of either "white" or "black", and can represent either a
@@ -20,16 +19,13 @@ func (s side) String() string {
 }
 
 type Position struct {
-	// side bitboards indicate the colour of a piece occupying a square.
-	side [2]uint64
-
 	// piece specific bitboards show if a square is occupied by a piece.
-	pawn uint64
-	nite uint64
-	bish uint64
-	rook uint64
-	quee uint64
-	king uint64
+	pawn [2]uint64
+	nite [2]uint64
+	bish [2]uint64
+	rook [2]uint64
+	quee [2]uint64
+	king [2]uint64
 
 	// hmc (half move clock) counts the number of (half) moves since a pawn has
 	// been captured captured or moved.
@@ -57,28 +53,18 @@ type Position struct {
 }
 
 func (p *Position) assertInvariants() {
-	if p.side[0]&p.side[1] != 0 {
-		panic("side bitboards overlap")
+	var occ uint64
+	for s := white; s < black; s++ {
+		for _, pieceBB := range [...][2]uint64{
+			p.pawn, p.nite, p.bish,
+			p.rook, p.quee, p.king,
+		} {
+			if occ&pieceBB[s] != 0 {
+				panic("overlapping piece bitboards")
+			}
+			occ |= pieceBB[s]
+		}
 	}
-
-	var ones int
-	for _, bb := range []uint64{p.pawn, p.nite, p.bish, p.rook, p.quee, p.king} {
-		ones += bits.OnesCount64(bb)
-	}
-	if ones != bits.OnesCount64(p.side[0]|p.side[1]) {
-		panic("piece bitboards overlap")
-	}
-
-	if p.pawn|p.nite|p.bish|p.rook|p.quee|p.king != p.side[0]|p.side[1] {
-		panic("piece bitboards and side bitboards don't match")
-	}
-
-	//if p.ep[white] & ^uint8((p.pawn&p.side[white]&rank4)<<24) != 0 {
-	//	panic("white en passant rights set but no pawn")
-	//}
-	//if p.ep[black] & ^uint8((p.pawn&p.side[black]&rank5)<<32) != 0 {
-	//	panic("black en passant rights set but no pawn")
-	//}
 
 	majorPieceRank := [2]uint64{rank1, rank8}
 	for s := white; s < black; s++ {
@@ -92,8 +78,7 @@ func (p *Position) assertInvariants() {
 		} {
 			if castle.rights {
 				requireRook := majorPieceRank[s] & castle.rookFile
-				haveRook := p.side[s] & p.rook
-				if (requireRook & haveRook) == 0 {
+				if (requireRook & p.rook[s]) == 0 {
 					panic(fmt.Sprintf(
 						"%s %s-side castle rights but %s's rook not present",
 						s, castle.name, castle.name,
@@ -103,26 +88,24 @@ func (p *Position) assertInvariants() {
 		}
 		if p.qcr[s] || p.kcr[s] {
 			requireKing := majorPieceRank[s] & fileE
-			haveKing := p.side[s] & p.king
-			if (requireKing & haveKing) == 0 {
+			if (requireKing & p.king[s]) == 0 {
 				panic(fmt.Sprintf("%s castle rights "+
 					"but king not at origin", s))
 			}
 		}
 	}
 
-	// TODO: only a single ep square should be 1 at a time.
+	// TODO: en passant
 }
 
 func InitialPosition() Position {
 	pos := Position{
-		side:   [2]uint64{rank12, rank78},
-		pawn:   rank27,
-		nite:   rank18 & fileBG,
-		bish:   rank18 & fileCF,
-		rook:   rank18 & fileAH,
-		quee:   rank18 & fileD,
-		king:   rank18 & fileE,
+		pawn:   [2]uint64{rank2, rank7},
+		nite:   [2]uint64{rank1 & fileBG, rank8 & fileBG},
+		bish:   [2]uint64{rank1 & fileCF, rank8 & fileCF},
+		rook:   [2]uint64{rank1 & fileAH, rank8 & fileAH},
+		quee:   [2]uint64{rank1 & fileD, rank8 & fileD},
+		king:   [2]uint64{rank1 & fileE, rank8 & fileE},
 		hmc:    0,
 		fmc:    1,
 		qcr:    [2]bool{true, true},
