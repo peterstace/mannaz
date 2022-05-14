@@ -35,14 +35,22 @@ type Position struct {
 	// been captured captured or moved.
 	hmc int16
 
-	// ep show en passant rights for each file.
-	ep [2]uint8
+	// fmc (full move clock) counts the number of (full) moves in the game so
+	// far. It starts at 1 and increments whenever black completes a move.
+	fmc int16
 
 	// qcr shows queen-side castle rights for each side.
 	qcr [2]bool
 
 	// kcr shows king-side castle rights for each side.
 	kcr [2]bool
+
+	// dp indicates if a pawn was double pushed in the last move.
+	dp bool
+
+	// dpFile gives the file of a pawn that was just double pushed (otherwise
+	// set to 0).
+	dpFile file
 
 	// stm is the side to move.
 	stm side
@@ -65,12 +73,12 @@ func (p *Position) assertInvariants() {
 		panic("piece bitboards and side bitboards don't match")
 	}
 
-	if p.ep[white] & ^uint8((p.pawn&p.side[white]&rank4)<<24) != 0 {
-		panic("white en passant rights set but no pawn")
-	}
-	if p.ep[black] & ^uint8((p.pawn&p.side[black]&rank5)<<32) != 0 {
-		panic("black en passant rights set but no pawn")
-	}
+	//if p.ep[white] & ^uint8((p.pawn&p.side[white]&rank4)<<24) != 0 {
+	//	panic("white en passant rights set but no pawn")
+	//}
+	//if p.ep[black] & ^uint8((p.pawn&p.side[black]&rank5)<<32) != 0 {
+	//	panic("black en passant rights set but no pawn")
+	//}
 
 	majorPieceRank := [2]uint64{rank1, rank8}
 	for s := white; s < black; s++ {
@@ -102,31 +110,26 @@ func (p *Position) assertInvariants() {
 			}
 		}
 	}
-}
 
-//func (p *Position) FEN() string {
-//	for ri := 7; ri >= 0; ri-- {
-//		r := rank(ri)
-//		for fi := 0; fi < 8; fi++ {
-//			sq := r & file(fi)
-//		}
-//	}
-//}
+	// TODO: only a single ep square should be 1 at a time.
+}
 
 func InitialPosition() Position {
 	pos := Position{
-		side: [2]uint64{rank12, rank78},
-		pawn: rank27,
-		nite: rank18 & fileBG,
-		bish: rank18 & fileCF,
-		rook: rank18 & fileAH,
-		quee: rank18 & fileD,
-		king: rank18 & fileE,
-		hmc:  0,
-		ep:   [2]uint8{},
-		qcr:  [2]bool{true, true},
-		kcr:  [2]bool{true, true},
-		stm:  white,
+		side:   [2]uint64{rank12, rank78},
+		pawn:   rank27,
+		nite:   rank18 & fileBG,
+		bish:   rank18 & fileCF,
+		rook:   rank18 & fileAH,
+		quee:   rank18 & fileD,
+		king:   rank18 & fileE,
+		hmc:    0,
+		fmc:    1,
+		qcr:    [2]bool{true, true},
+		kcr:    [2]bool{true, true},
+		dp:     false,
+		dpFile: 0,
+		stm:    white,
 	}
 	pos.assertInvariants()
 	return pos
