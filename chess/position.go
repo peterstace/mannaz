@@ -66,7 +66,7 @@ func (p *Position) assertInvariants() {
 		}
 	}
 
-	majorPieceRank := [2]uint64{rank1, rank8}
+	backRank := [2]uint64{rank1, rank8}
 	for s := white; s < black; s++ {
 		for _, castle := range [2]struct {
 			name     string
@@ -77,7 +77,7 @@ func (p *Position) assertInvariants() {
 			{"king", fileH, p.kcr[s]},
 		} {
 			if castle.rights {
-				requireRook := majorPieceRank[s] & castle.rookFile
+				requireRook := backRank[s] & castle.rookFile
 				if (requireRook & p.rook[s]) == 0 {
 					panic(fmt.Sprintf(
 						"%s %s-side castle rights but %s's rook not present",
@@ -87,7 +87,7 @@ func (p *Position) assertInvariants() {
 			}
 		}
 		if p.qcr[s] || p.kcr[s] {
-			requireKing := majorPieceRank[s] & fileE
+			requireKing := backRank[s] & fileE
 			if (requireKing & p.king[s]) == 0 {
 				panic(fmt.Sprintf("%s castle rights "+
 					"but king not at origin", s))
@@ -95,7 +95,16 @@ func (p *Position) assertInvariants() {
 		}
 	}
 
-	// TODO: en passant
+	if !p.dp && p.dpFile != 0 {
+		panic("dp set but dpFile not zero")
+	}
+	if p.dp {
+		r := [2]uint64{rank6, rank3}[p.stm]
+		f := fileBB(p.dpFile)
+		if (r & f) == 0 {
+			panic("en passant pawn missing")
+		}
+	}
 }
 
 func InitialPosition() Position {
